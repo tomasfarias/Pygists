@@ -1,1 +1,3 @@
-# Improving code snippets with gists
+# Pygists
+
+Just a tool to manage GitHub gists
