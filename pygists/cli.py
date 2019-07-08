@@ -42,6 +42,7 @@ def create_parser():
             ' otherwise all names mapped 1-to-1 to contents'
         )
     )
+    parser.add_argument('--id', '-i', default=None, help='Gist ID')
     parser.add_argument('--description', '-d', default='', help='Gist description')
     parser.add_argument(
         '--private', '-p', action='store_true', default=False,
@@ -75,10 +76,29 @@ def main():
                 contents.append(f.read())
 
         else:
-            contents.append(content)
+            contents.append(content if content is not None else '')
 
-    new_gist = gist.create_gist(
-        names=names, contents=contents, description=args.description,
-        public=True if args.private is False else False
-    )
+    if args.id is not None:
+
+        existing = [
+            _ for _ in gist.get_gists(since=args.since) if _.id == args.id
+        ]
+
+    if len(existing) == 0:
+        new_gist = gist.create_gist(
+            names=names, contents=contents, description=args.description,
+            public=True if args.private is False else False
+        )
+
+    else:
+        current_names = [f.filename for f in existing[0].files]
+        new_names = current_names if len(names) == 0 else names
+        new_content = [f.content for f in existing[0].files] if len(contents) == 0 else contents
+        new_description = existing[0].description if args.description == '' else args.description
+
+        new_gist = gist.edit_gist(
+            gist_id=args.id, names=current_names, new_names=new_names, contents=new_content,
+            description=new_description,
+            )
+
     new_gist.describe()
