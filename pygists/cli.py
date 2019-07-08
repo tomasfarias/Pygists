@@ -42,7 +42,7 @@ def create_parser():
             ' otherwise all names mapped 1-to-1 to contents'
         )
     )
-    parser.add_argument('--description', '-d', help='Gist description')
+    parser.add_argument('--description', '-d', default='', help='Gist description')
     parser.add_argument(
         '--private', '-p', action='store_true', default=False,
         help='Make the gist private (default: False)'

@@ -86,6 +86,7 @@ def test_create_parser():
     assert args.username == 'test_user'
     assert args.token_file == 'path/to/token.txt'
     assert args.since == dt.datetime(2019, 1, 1, 12, 0, 1)
+    assert args.description == ''
 
     args = parser.parse_args([
         '-u', 'test_user', '-t', 'path/to/token.txt', '-n', 'path/to/file.py', '-d', 'My gist'
