@@ -12,6 +12,7 @@ setup(
     author='Tomas Farias',
     author_email='tomasfariassantana@gmail.com',
     description='CLI tool to operate with the GitHub Gists API.',
+    scripts=['bin/pygists'],
     long_description=readme(),
     packages=find_packages(exclude=['tests', 'docs']),
     license='MIT',
