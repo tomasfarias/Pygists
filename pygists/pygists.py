@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import List, Dict, Sequence, Union
+from typing import List, Sequence, Union
 from urllib.parse import urljoin
 
 import requests
@@ -28,7 +28,7 @@ class Pygists:
 
     def create_gist(
             self, names: Sequence[str], contents: Sequence[str], description: str, public: bool
-    ) -> Dict:
+    ) -> Gist:
         """Create gist with the GitHub API"""
 
         if len(names) != len(contents):
@@ -57,9 +57,25 @@ class Pygists:
         )
         return [Gist.from_response(gist) for gist in r.json()]
 
+    def edit_gist(
+        self, gist_id: str, names: Sequence[str], contents: Sequence[str], description: str
+    ) -> Gist:
+        """Edit a single gist"""
+        endpoint = urljoin(BASE_ENDPOINT, f'gists/{gist_id}')
+        files = {name: {'content': content} for name, content in zip(names, contents)}
+        params = {
+            'files': files,
+            'description': description
+        }
+
+        r = self.session.patch(endpoint, json=params)
+        r.raise_for_status()
+
+        return Gist.from_response(r.json())
+
     def get_or_create_gist(
             self, names: Sequence[str], contents: Sequence[str], description: str, public: bool
-    ) -> Union[Dict, List]:
+    ) -> Union[Gist, List[Gist]]:
         """
         Get all gists, check if a gist exists with given file names and create it if it doesn't
         """

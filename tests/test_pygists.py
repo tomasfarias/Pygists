@@ -60,19 +60,39 @@ def test_create_multiple_gist_request(mock_post, gist):
 
 
 @unittest.mock.patch('requests.Session.get')
-def test_get_gists_request(mock_post, gist):
+def test_get_gists_request(mock_get, gist):
     """Properly pass gist request"""
 
     gist.get_gists()
-    mock_post.assert_called_with(
+    mock_get.assert_called_with(
         'https://api.github.com/users/testuser/gists',
         params=None
     )
 
     gist.get_gists(since=dt.datetime(2019, 1, 1, 10, 0, 20))
-    mock_post.assert_called_with(
+    mock_get.assert_called_with(
         'https://api.github.com/users/testuser/gists',
         params={'since': '2019-01-01T10:00:20Z'}
+    )
+
+
+@unittest.mock.patch('requests.Session.patch')
+def test_edit_gist_request(mock_patch, gist):
+    """Properly pass gist edit request"""
+
+    gist.edit_gist(
+        gist_id='1a2b3c4d5e6f', names=['test_new.py'], contents=['print("New Hello World!")'],
+        description='New Testing'
+    )
+
+    mock_patch.assert_called_with(
+        'https://api.github.com/gists/1a2b3c4d5e6f',
+        json={
+            'files': {
+                'test_new.py': {'content': 'print("New Hello World!")'},
+            },
+            'description': 'New Testing'
+        }
     )
 
 
