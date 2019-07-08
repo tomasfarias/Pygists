@@ -1,10 +1,5 @@
-import argparse
 import datetime as dt
-from itertools import zip_longest
-import os
-from pathlib import Path
-import sys
-from typing import List, Dict, Iterable, Union
+from typing import List, Dict, Sequence, Union
 from urllib.parse import urljoin
 
 import requests
@@ -17,67 +12,65 @@ BASE_ENDPOINT = 'https://api.github.com/'
 
 class Pygists:
 
+    def __init__(self, username: str, token_path: str) -> None:
+        self.username = username
+        self.token_path = token_path
+        self.session = self.start_session()
 
-	def __init__(self, username: str, token_path: str) -> None:
-		self.username = username
-		self.token_path = token_path
-		self.session = self.start_session()
+    def start_session(self) -> requests.Session:
+        """Read OAuth token and set session authorization parameters"""
+        with open(self.token_path, 'r') as f:
+            token = f.read()
 
+        session = requests.Session()
+        session.auth = (self.username, token)
+        return session
 
-	def start_session(self) -> requests.Session:
-		"""Read OAuth token and set session authorization parameters"""
-		with open(self.token_path, 'r') as f:
-			token = f.read()
+    def create_gist(
+            self, names: Sequence[str], contents: Sequence[str], description: str, public: bool
+    ) -> Dict:
+        """Create gist with the GitHub API"""
 
-		session = requests.Session()
-		session.auth = (self.username, token)
-		return session
+        if len(names) != len(contents):
+            raise ValueError('Length of names and contents differs.')
 
+        endpoint = urljoin(BASE_ENDPOINT, 'gists')
+        files = {name: {'content': content} for name, content in zip(names, contents)}
+        params = {
+            'files': files,
+            'description': description,
+            'public': public
+        }
 
-	def create_gist(
-			self, names: Iterable[str], contents: Iterable[str], description: str, public: bool
-		) -> Dict:
-		"""Create gist with the GitHub API"""
-		if len(names) != len(contents):
-			raise ValueError('Length of names and contents differs.')
+        r = self.session.post(endpoint, json=params)
+        r.raise_for_status()
 
-		endpoint = urljoin(BASE_ENDPOINT, 'gists')
-		files = {name: {'content': content} for name, content in zip(names, contents)}
-		params = {
-			'files': files,
-			'description': description,
-			'public': public
-		}
+        return Gist.from_response(r.json())
 
-		r = self.session.post(endpoint, json=params)
-		r.raise_for_status()
+    def get_gists(self, since: dt.datetime = None) -> List:
+        """Get all user's public gists"""
+        endpoint = urljoin(BASE_ENDPOINT, f'users/{self.username}/gists')
 
-		return Gist.from_response(r.json())
+        r = self.session.get(
+            endpoint,
+            params={'since': since.strftime('%Y-%m-%dT%H:%M:%SZ')} if since is not None else None
+        )
+        return [Gist.from_response(gist) for gist in r.json()]
 
+    def get_or_create_gist(
+            self, names: Sequence[str], contents: Sequence[str], description: str, public: bool
+    ) -> Union[Dict, List]:
+        """
+        Get all gists, check if a gist exists with given file names and create it if it doesn't
+        """
 
-	def get_gists(self, since: dt.datetime=None) -> List:
-		"""Get all user's public gists"""
-		endpoint = urljoin(BASE_ENDPOINT, f'users/{self.username}/gists')
+        if len(names) != len(contents):
+            raise ValueError('Length of names and contents differs.')
 
-		r = self.session.get(
-			endpoint,
-			params={'since': since.strftime('%Y-%m-%dT%H:%M:%SZ')} if since is not None else None
-		)
-		return [Gist.from_response(gist) for gist in r.json()]
+        current_gists = self.get_gists()
 
+        for gist in current_gists:
+            if sorted(gist['files'].keys()) == sorted(names):
+                return gist
 
-	def get_or_create_gist(
-			self, names: Iterable[str], contents: Iterable[str], description: str, public: bool
-		) -> Union[Dict, List]:
-		"""Get all gists, check if a gist exists with given file names and create it if it doesn't"""
-
-		if len(names) != len(contents):
-			raise ValueError('Length of names and contents differs.')
-
-		current_gists = self.get_gists()
-
-		for gist in current_gists:
-			if sorted(gist['files'].keys()) == sorted(names):
-				return gist
-
-		return self.create_gist(names, contents, description, public)
+        return self.create_gist(names, contents, description, public)
