@@ -55,7 +55,7 @@ class Gist:
 
     def describe(self):
         print(
-            f"{self.owner.login}'s GitHub Gist: {self.files[0].filename}\n"
+            f"{self.owner.login}'s GitHub Gist: {self.id}\n"
             f"'{self.description}'\n"
             f"Created: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
             f"Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n"

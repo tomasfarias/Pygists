@@ -81,7 +81,8 @@ def test_edit_gist_request(mock_patch, gist):
     """Properly pass gist edit request"""
 
     gist.edit_gist(
-        gist_id='1a2b3c4d5e6f', names=['test_new.py'], contents=['print("New Hello World!")'],
+        gist_id='1a2b3c4d5e6f', names=['test.py'], contents=['print("New Hello World!")'],
+        new_names=['test_new.py'],
         description='New Testing'
     )
 
@@ -89,7 +90,7 @@ def test_edit_gist_request(mock_patch, gist):
         'https://api.github.com/gists/1a2b3c4d5e6f',
         json={
             'files': {
-                'test_new.py': {'content': 'print("New Hello World!")'},
+                'test.py': {'content': 'print("New Hello World!")', 'filename': 'test_new.py'},
             },
             'description': 'New Testing'
         }

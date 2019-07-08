@@ -58,11 +58,23 @@ class Pygists:
         return [Gist.from_response(gist) for gist in r.json()]
 
     def edit_gist(
-        self, gist_id: str, names: Sequence[str], contents: Sequence[str], description: str
+        self, gist_id: str, names: Sequence[str], contents: Sequence[str],
+        description: str, new_names: Sequence[Union[str, None]] = None
     ) -> Gist:
         """Edit a single gist"""
+
+        if new_names is None:
+            new_names = names
+
+        if len(names) != len(contents) or len(names) != len(new_names):
+            raise ValueError('Length of names, new_names and contents differs.')
+
         endpoint = urljoin(BASE_ENDPOINT, f'gists/{gist_id}')
-        files = {name: {'content': content} for name, content in zip(names, contents)}
+
+        files = {
+            name: {'content': content, 'filename': new_name}
+            for name, content, new_name in zip(names, contents, new_names)
+        }
         params = {
             'files': files,
             'description': description
