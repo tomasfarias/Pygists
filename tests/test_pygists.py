@@ -4,6 +4,7 @@ import unittest.mock
 import pytest
 
 from pygists import Pygists
+from pygists.cli import create_parser
 
 
 @pytest.fixture
@@ -73,3 +74,26 @@ def test_get_gists_request(mock_post, gist):
         'https://api.github.com/users/testuser/gists',
         params={'since': '2019-01-01T10:00:20Z'}
     )
+
+
+def test_create_parser():
+    parser = create_parser()
+    args = parser.parse_args([
+        '-g', '-u', 'test_user', '-t', 'path/to/token.txt', '-s', '2019-01-01 12:00:01'
+    ])
+
+    assert args.get is True
+    assert args.username == 'test_user'
+    assert args.token_file == 'path/to/token.txt'
+    assert args.since == dt.datetime(2019, 1, 1, 12, 0, 1)
+
+    args = parser.parse_args([
+        '-u', 'test_user', '-t', 'path/to/token.txt', '-n', 'path/to/file.py', '-d', 'My gist'
+    ])
+
+    assert args.get is False
+    assert args.username == 'test_user'
+    assert args.token_file == 'path/to/token.txt'
+    assert args.name[0] == 'path/to/file.py'
+    assert args.description == 'My gist'
+    assert args.since is None

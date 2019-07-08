@@ -7,7 +7,14 @@ import sys
 from pygists import Pygists
 
 
-def main():
+def optional_date_type(s):
+    try:
+        return dt.datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+    except TypeError:
+        return None
+
+
+def create_parser():
     parser = argparse.ArgumentParser('Create or get GitHub gists.')
     parser.add_argument(
         '--username', '-u', help='GitHub username', required=True
@@ -18,7 +25,7 @@ def main():
     )
     parser.add_argument('--get', '-g', action='store_true', default=False, help='Only get gists')
     parser.add_argument(
-        '--since', '-s', default=None,
+        '--since', '-s', default=None, type=optional_date_type,
         help='Get gists since this date in YYYY-MM-DD HH:MM:SS format'
     )
     parser.add_argument(
@@ -41,17 +48,17 @@ def main():
         help='Make the gist private (default: False)'
     )
 
-    args = parser.parse_args()
+    return parser
+
+
+def main():
+    args = create_parser().parse_args()
 
     gist = Pygists(args.username, args.token_file)
 
     if args.get is True:
-        try:
-            since = dt.datetime.strptime(args.since, '%Y-%m-%d %H:%M:%S')
-        except TypeError:
-            since = None
 
-        gists = gist.get_gists(since=since)
+        gists = gist.get_gists(since=args.since)
 
         for gist in gists:
             gist.describe()
