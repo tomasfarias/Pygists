@@ -86,7 +86,7 @@ def main():
         ]
 
     else:
-        existing = None
+        existing = []
 
     if len(existing) == 0:
         new_gist = gist.create_gist(
