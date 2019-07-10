@@ -69,20 +69,24 @@ def main():
     contents = []
 
     for name, content in zip_longest(args.name, args.content):
-        names.append(name)
 
         if Path(name).exists() is True:
+            names.append(Path(name).name)
+
             with open(name, 'r') as f:
                 contents.append(f.read())
 
         else:
+            names.append(name)
             contents.append(content if content is not None else '')
 
     if args.id is not None:
-
         existing = [
             _ for _ in gist.get_gists(since=args.since) if _.id == args.id
         ]
+
+    else:
+        existing = None
 
     if len(existing) == 0:
         new_gist = gist.create_gist(
