@@ -1,8 +1,7 @@
 import argparse
 import datetime as dt
-from itertools import zip_longest
-from pathlib import Path
 import sys
+import os
 
 from pygists import Pygists
 
@@ -16,93 +15,114 @@ def optional_date_type(s):
 
 def create_parser():
     parser = argparse.ArgumentParser('Create or get GitHub gists.')
-    parser.add_argument(
-        '--username', '-u', help='GitHub username', required=True
-    )
-    parser.add_argument(
-        '--token-file', '-t', help='Path to file containing GitHub OAuth token',
-        required=True
-    )
-    parser.add_argument('--get', '-g', action='store_true', default=False, help='Only get gists')
-    parser.add_argument(
+    subparsers = parser.add_subparsers(help='List, get, update or delete gists', dest='subcommand')
+
+    parse_ls = subparsers.add_parser('ls', help='List all gists')
+    parse_ls.add_argument(
         '--since', '-s', default=None, type=optional_date_type,
         help='Get gists since this date in YYYY-MM-DD HH:MM:SS format'
     )
-    parser.add_argument(
-        '--content', '-c', action='append', default=[],
-        help=(
-            'Gist content. All contents mapped 1-to-1 to names.'
-            ' Ignored if name corresponds to existing files.'
-        )
+    add_common_arguments(parse_ls)
+
+    parse_get = subparsers.add_parser('get', help='Get a gist')
+    parse_get.add_argument(
+        'id', help='The gist ID to get'
     )
-    parser.add_argument(
-        '--name', '-n', action='append', default=[],
-        help=(
-            'Gist file name. If a filename exists, will read contents from it,'
-            ' otherwise all names mapped 1-to-1 to contents'
-        )
+    add_common_arguments(parse_get)
+
+    parse_update = subparsers.add_parser('update', help='Update a gist')
+    parse_update.add_argument(
+        'id', help='The gist ID to update'
     )
-    parser.add_argument('--id', '-i', default=None, help='Gist ID')
-    parser.add_argument('--description', '-d', default='', help='Gist description')
-    parser.add_argument(
-        '--private', '-p', action='store_true', default=False,
-        help='Make the gist private (default: False)'
+    parse_update.add_argument(
+        '--add', nargs='+', default=[], required=False,
+        help='One or more files to be added to the gist'
     )
+    parse_update.add_argument(
+        '--delete', nargs='+', default=[], required=False,
+        help='One or more files to be deleted from the gist'
+    )
+    parse_update.add_argument(
+        '--modify', nargs='+', default=[], required=False,
+        help='One or more files to be modified from the gist formatted as OLD_NAME=path/to/new.file'
+    )
+    parse_update.add_argument(
+        '--description', '-d', required=False, help='The new gist description'
+    )
+    add_common_arguments(parse_update)
+
+    parse_create = subparsers.add_parser('create', help='Create a new gist')
+    parse_create.add_argument(
+        'file', nargs='+', help='One or more files to be set to the gist'
+    )
+    parse_create.add_argument(
+        '--description', '-d', required=False, help='The gist description'
+    )
+    add_common_arguments(parse_create)
 
     return parser
 
 
+def add_common_arguments(parser):
+    parser.add_argument(
+        '--username', '-u', help='GitHub username', required=True
+    )
+    parser.add_argument(
+        '--token', '-t', help='GitHub OAuth token',
+        required=False, default=os.getenv('GITHUB_TOKEN')
+    )
+    parser.add_argument(
+        '--json', default=False, action='store_true', help='Print gist in JSON format'
+    )
+    parser.add_argument(
+        '--show-content', '-c', default=False, action='store_true', help="Show the gist's content",
+    )
+    return parser
+
+
 def main():
-    args = create_parser().parse_args()
+    args = create_parser().parse_args(sys.argv[1:])
+    pygists = Pygists(args.username, args.token)
 
-    gist = Pygists(args.username, args.token_file)
+    HANDLERS.get(args.subcommand, sys.exit(1))(pygists, args)
+    sys.exit(0)
 
-    if args.get is True:
 
-        gists = gist.get_gists(since=args.since)
+def get(pygists: Pygists, args):
+    gist = pygists.get_gist(gist_id=args.id)
+    gist.describe(as_json=args.json, show_content=args.show_content)
 
-        for gist in gists:
-            gist.describe()
-        sys.exit(0)
 
-    names = []
-    contents = []
+def ls(pygists: Pygists, args):
+    gists = pygists.list_user_gists(since=args.since)
 
-    for name, content in zip_longest(args.name, args.content):
+    for gist in gists:
+        gist.describe(as_json=args.json, show_content=args.show_content)
 
-        if Path(name).exists() is True:
-            names.append(Path(name).name)
 
-            with open(name, 'r') as f:
-                contents.append(f.read())
+def create(pygists: Pygists, args):
+    gist = pygists.create_gist_from_files(
+        *args.file, description=args.description, public=not args.private
+    )
+    gist.describe(as_json=args.json, show_content=args.show_content)
 
-        else:
-            names.append(name)
-            contents.append(content if content is not None else '')
 
-    if args.id is not None:
-        existing = [
-            _ for _ in gist.get_gists(since=args.since) if _.id == args.id
-        ]
+def update(pygists: Pygists, args):
+    to_modify = {}
+    for arg in args.to_modify:
+        old_name, new_file = arg.split('=')
+        to_modify[old_name] = new_file
 
-    else:
-        existing = []
+    gist = pygists.edit_gist_from_files(
+        gist_id=args.id, to_add=args.add, to_delete=args.delete,
+        to_modify=to_modify, description=args.description
+    )
+    gist.describe(as_json=args.json, show_content=args.show_content)
 
-    if len(existing) == 0:
-        new_gist = gist.create_gist(
-            names=names, contents=contents, description=args.description,
-            public=True if args.private is False else False
-        )
 
-    else:
-        current_names = [f.filename for f in existing[0].files]
-        new_names = current_names if len(names) == 0 else names
-        new_content = [f.content for f in existing[0].files] if len(contents) == 0 else contents
-        new_description = existing[0].description if args.description == '' else args.description
-
-        new_gist = gist.edit_gist(
-            gist_id=args.id, names=current_names, new_names=new_names, contents=new_content,
-            description=new_description,
-            )
-
-    new_gist.describe()
+HANDLERS = {
+    'ls': ls,
+    'get': get,
+    'update': update,
+    'create': create,
+}

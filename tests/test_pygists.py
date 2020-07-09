@@ -8,15 +8,12 @@ from pygists.cli import create_parser
 
 
 @pytest.fixture
-def gist(tmpdir):
-    fh = tmpdir.join('token.txt')
-    fh.write('testtoken')
-
-    return Pygists('testuser', fh)
+def gist():
+    return Pygists('test_user', 'test_token')
 
 
 def test_pygist_init(gist):
-    assert gist.session.auth == ('testuser', 'testtoken')
+    assert gist.session.auth == ('test_user', 'test_token')
 
 
 @unittest.mock.patch('requests.Session.post')
@@ -60,18 +57,18 @@ def test_create_multiple_gist_request(mock_post, gist):
 
 
 @unittest.mock.patch('requests.Session.get')
-def test_get_gists_request(mock_get, gist):
+def test_list_gists_request(mock_get, gist):
     """Properly pass gist request"""
 
-    gist.get_gists()
+    gist.list_user_gists()
     mock_get.assert_called_with(
-        'https://api.github.com/users/testuser/gists',
+        'https://api.github.com/users/test_user/gists',
         params=None
     )
 
-    gist.get_gists(since=dt.datetime(2019, 1, 1, 10, 0, 20))
+    gist.list_user_gists(since=dt.datetime(2019, 1, 1, 10, 0, 20))
     mock_get.assert_called_with(
-        'https://api.github.com/users/testuser/gists',
+        'https://api.github.com/users/test_user/gists',
         params={'since': '2019-01-01T10:00:20Z'}
     )
 
@@ -79,43 +76,81 @@ def test_get_gists_request(mock_get, gist):
 @unittest.mock.patch('requests.Session.patch')
 def test_edit_gist_request(mock_patch, gist):
     """Properly pass gist edit request"""
-
+    files = {
+        'test.py': {'content': 'print("Hello World!")'},
+        'test2.py': {'content': 'print("New Hello World!")', 'filename': 'new_test.py'},
+        'test_delete.py': None,
+    }
     gist.edit_gist(
-        gist_id='1a2b3c4d5e6f', names=['test.py'], contents=['print("New Hello World!")'],
-        new_names=['test_new.py'],
-        description='New Testing'
+        gist_id='1a2b3c4d5e6f', files=files, new_description='New Testing'
     )
 
     mock_patch.assert_called_with(
         'https://api.github.com/gists/1a2b3c4d5e6f',
         json={
             'files': {
-                'test.py': {'content': 'print("New Hello World!")', 'filename': 'test_new.py'},
+                'test2.py': {'content': 'print("New Hello World!")', 'filename': 'new_test.py'},
+                'test.py': {'content': 'print("Hello World!")'},
+                'test_delete.py': None,
             },
             'description': 'New Testing'
         }
     )
 
 
-def test_create_parser():
+def test_parse_ls_command():
     parser = create_parser()
     args = parser.parse_args([
-        '-g', '-u', 'test_user', '-t', 'path/to/token.txt', '-s', '2019-01-01 12:00:01'
+        'ls', '-s', '2019-01-01 12:00:01', '-u', 'test_user', '-t', 'test_token'
     ])
 
-    assert args.get is True
+    assert args.subcommand == 'ls'
     assert args.username == 'test_user'
-    assert args.token_file == 'path/to/token.txt'
+    assert args.token == 'test_token'
     assert args.since == dt.datetime(2019, 1, 1, 12, 0, 1)
-    assert args.description == ''
 
+
+def test_parse_create_command():
+    parser = create_parser()
     args = parser.parse_args([
-        '-u', 'test_user', '-t', 'path/to/token.txt', '-n', 'path/to/file.py', '-d', 'My gist'
+        'create', 'path/to/file.py', 'path/to/another_file.py',
+        '-d', 'My gist', '-u', 'test_user', '-t', 'test_token',
     ])
 
-    assert args.get is False
+    assert args.subcommand == 'create'
     assert args.username == 'test_user'
-    assert args.token_file == 'path/to/token.txt'
-    assert args.name[0] == 'path/to/file.py'
+    assert args.token == 'test_token'
+    assert args.file == ['path/to/file.py', 'path/to/another_file.py']
     assert args.description == 'My gist'
-    assert args.since is None
+
+
+def test_parse_get_command():
+    parser = create_parser()
+    args = parser.parse_args([
+        'get', '1a2b3c4d5e6f', '--json', '-u', 'test_user', '-t', 'test_token',
+    ])
+
+    assert args.subcommand == 'get'
+    assert args.username == 'test_user'
+    assert args.token == 'test_token'
+    assert args.id == '1a2b3c4d5e6f'
+    assert args.json is True
+    assert args.show_content is False
+
+
+def test_parse_update_command():
+    parser = create_parser()
+    args = parser.parse_args([
+        'update', '1a2b3c4d5e6f', '--add', 'path/to/file.py', 'path/to/another_file.py',
+        '--modify', 'old_name.py=path/to/new_file.py',
+        '--delete', 'delete_file.py', 'delete_file2.py',
+        '-u', 'test_user', '-t', 'test_token',
+    ])
+
+    assert args.subcommand == 'update'
+    assert args.username == 'test_user'
+    assert args.token == 'test_token'
+    assert args.id == '1a2b3c4d5e6f'
+    assert args.add == ['path/to/file.py', 'path/to/another_file.py']
+    assert args.modify == ['old_name.py=path/to/new_file.py']
+    assert args.delete == ['delete_file.py', 'delete_file2.py']

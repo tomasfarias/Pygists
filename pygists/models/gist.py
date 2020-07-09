@@ -3,6 +3,8 @@ Github gist model
 """
 from collections import namedtuple
 import datetime as dt
+from typing import List
+import json
 
 GistFile = namedtuple(
     'GistFiles', ('filename', 'type', 'language', 'raw_url', 'size', 'truncated', 'content'),
@@ -18,7 +20,6 @@ GistOwner = namedtuple(
 
 
 class Gist:
-
     __slots__ = [
         'url', 'forks_url', 'commits_url', 'id', 'node_id', 'git_pull_url', 'git_push_url',
         'html_url', 'files', 'public', 'created_at', 'updated_at', 'description',
@@ -30,6 +31,26 @@ class Gist:
         'files': lambda files: [GistFile(**_) for _ in files],
         'owner': lambda _: GistOwner(**_),
     }
+
+    id: str
+    url: str
+    forks_url: str
+    commits_url: str
+    node_id: str
+    git_pull_url: str
+    git_push_url: str
+    html_url: str
+    files: List[GistFile]
+    public: str
+    created_at: dt.datetime
+    updated_at: dt.datetime
+    description: str
+    comments: str
+    user: str
+    comments_url: str
+    owner: GistOwner
+    truncated: str
+    script_url: str
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
@@ -53,15 +74,46 @@ class Gist:
 
         return cls(**resp)
 
-    def describe(self):
-        print(
-            f"{self.owner.login}'s GitHub Gist: {self.id}\n"
-            f"'{self.description}'\n"
-            f"Created: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
-            f"Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
-            f"Embed: {self.script_url}\n"
-            "File | Size (chars)"
-        )
-        for file in self.files:
-            print(f'{file.filename}', '|', f'{file.size}')
-        print('\n')
+    def describe(self, as_json: bool = False, show_content: bool = False):
+        if as_json is True:
+            msg = {
+                'gist_id': self.id,
+                'username': self.owner.login,
+                'created': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'updated': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'embed_url': self.script_url,
+            }
+            if show_content is True:
+                msg['files'] = {
+                    file.filename: {
+                        'filename': file.filename,
+                        'size': file.size,
+                        'content': file.content
+                    }
+                    for file in self.files
+                }
+            else:
+                msg['files'] = {
+                    file.filename: {
+                        'filename': file.filename,
+                        'size': file.size
+                    }
+                    for file in self.files
+                }
+            print(json.dumps(msg))
+            print('\n')
+        else:
+            str_msg = (
+                f"{self.owner.login}'s GitHub Gist: {self.id}\n"
+                f"'{self.description}'\n"
+                f"Created: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"Embed: {self.script_url}\n"
+                "File | Size (chars)"
+            )
+            print(str_msg)
+            for file in self.files:
+                print(f'{file.filename}', '|', f'{file.size}')
+                if show_content is True:
+                    print(file.content)
+            print('\n')

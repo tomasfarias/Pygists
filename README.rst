@@ -1,4 +1,3 @@
-=======
 Pygists
 =======
 
@@ -7,11 +6,11 @@ Just a tool to manage GitHub gists
 Usage
 -----
 
-To get all your gists with embed links:
+To list all your gists with embed links use :code:`ls`:
 
 ::
 
-  $ pygists -u your_username -t path/to/token.txt --get
+  $ pygists ls -u your_username -t $GITHUB_TOKEN
 
   tomasfarias's GitHub Gist: 6d83bf247790b4116f0575ee230cc4d0
   'Just a second test'
@@ -31,11 +30,11 @@ To get all your gists with embed links:
   test_1.py | 15
 
 
-To create a new gist from a file:
+To :code:`create` a new gist from a file call:
 
 ::
 
-  $ pygists -n test_3.py -u tomasfarias -t auth/token.txt -d 'Just another test'
+  $ pygists create test_3.py -u tomasfarias -t $GITHUB_TOKEN -d 'Just another test'
 
   tomasfarias's GitHub Gist: c4eb4855f02e77d162a78520da50a0b9
   'Just another test'
@@ -46,11 +45,11 @@ To create a new gist from a file:
   test_3.py | 16
 
 
-To edit an existing gist get the ID and pass it. Only defined arguments will be edited, previous values will be kept for the rest:
+To :code:`update` an existing gist get the ID and pass it. Use :code:`add`, :code:`delete`, :code:`modify` to add new files to the gist, delete an existing file and modifiy the contents and name of an existing file:
 
 ::
 
-  $ pygists -i c4eb4855f02e77d162a78520da50a0b9 -u tomasfarias -t auth/token.txt -d "New description" -n test_new_3.py
+  $ pygists update c4eb4855f02e77d162a78520da50a0b9 -u tomasfarias -t $GITHUB_TOKEN -d "New description" --add test_new_3.py --modify old_file_name.py=path/to/new_file.py
 
   tomasfarias's GitHub Gist: c4eb4855f02e77d162a78520da50a0b9
   'New description'
@@ -59,3 +58,4 @@ To edit an existing gist get the ID and pass it. Only defined arguments will be 
   Embed: https://gist.github.com/tomasfarias/c4eb4855f02e77d162a78520da50a0b9.js
   File | Size (chars)
   test_new_3.py | 16
+  new_file.py | 25
