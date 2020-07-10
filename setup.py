@@ -8,7 +8,7 @@ def readme():
 
 setup(
     name='pygists',
-    version='1.0.2-beta',
+    version='1.1.0',
     author='Tomas Farias',
     author_email='tomasfariassantana@gmail.com',
     description='CLI tool to operate with the GitHub Gists API.',
@@ -21,7 +21,7 @@ setup(
         'requests==2.24.0'
     ],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.7',
