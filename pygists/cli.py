@@ -16,7 +16,7 @@ def optional_date_type(s):
 
 def create_parser():
     parser = argparse.ArgumentParser('Create or get GitHub gists.')
-    subparsers = parser.add_subparsers(help='List, get, update or delete gists', dest='subcommand')
+    subparsers = parser.add_subparsers(help='List, create, get, update or delete gists', dest='subcommand')
 
     parse_ls = subparsers.add_parser('ls', help='List all gists')
     parse_ls.add_argument(
