@@ -34,7 +34,7 @@ To :code:`create` a new gist from a file call:
 
 ::
 
-  $ pygists create test_3.py -u tomasfarias -t $GITHUB_TOKEN -d 'Just another test'
+  $ pygists create path/to/gist/file.py -u tomasfarias -t $GITHUB_TOKEN -d 'Just another test'
 
   tomasfarias's GitHub Gist: c4eb4855f02e77d162a78520da50a0b9
   'Just another test'

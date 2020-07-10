@@ -16,13 +16,19 @@ class Pygists:
     def __init__(self, username: str, token: str) -> None:
         self.username = username
         self.token = token
-        self.session = self.start_session()
+        self._session = None
 
-    def start_session(self) -> requests.Session:
+    @property
+    def session(self):
         """Set session authorization parameters"""
-        session = requests.Session()
-        session.auth = (self.username, self.token)
-        return session
+        if self._session is None:
+            self._session = requests.Session()
+            self._session.auth = (self.username, self.token)
+            self._session.headers.update({
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': self.username,
+            })
+        return self._session
 
     def create_gist_from_files(
         self, *args: Union[str, bytes, os.PathLike], description: str = '', public: bool = True
@@ -111,7 +117,7 @@ class Pygists:
 
         r = self.session.get(
             endpoint,
-            params={'since': since.strftime('%Y-%m-%dT%H:%M:%SZ')} if since is not None else None
+            params={'since': since.isoformat()} if since is not None else None
         )
         return [Gist.from_response(gist) for gist in r.json()]
 
@@ -123,3 +129,13 @@ class Pygists:
             endpoint,
         )
         return Gist.from_response(r.json())
+
+    def delete_gist(self, gist_id: str):
+        """Delete a user's gist"""
+        endpoint = urljoin(BASE_ENDPOINT, f'/gists/{gist_id}')
+
+        r = self.session.delete(
+            endpoint,
+        )
+        if r.status_code > 204:
+            print(f'Delete operation failed: {r.json()}')

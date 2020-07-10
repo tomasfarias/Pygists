@@ -83,23 +83,14 @@ class Gist:
                 'updated': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'embed_url': self.script_url,
             }
-            if show_content is True:
-                msg['files'] = {
-                    file.filename: {
-                        'filename': file.filename,
-                        'size': file.size,
-                        'content': file.content
-                    }
-                    for file in self.files
+            msg['files'] = {}
+            for file in self.files:
+                msg[file.filename] = {
+                    'filename': file.filename,
+                    'size': file.size,
                 }
-            else:
-                msg['files'] = {
-                    file.filename: {
-                        'filename': file.filename,
-                        'size': file.size
-                    }
-                    for file in self.files
-                }
+                if show_content is True and file.content is not None:
+                    msg[file.filename].update({'content': file.content})
             print(json.dumps(msg))
             print('\n')
         else:
@@ -114,6 +105,6 @@ class Gist:
             print(str_msg)
             for file in self.files:
                 print(f'{file.filename}', '|', f'{file.size}')
-                if show_content is True:
+                if show_content is True and file.content is not None:
                     print(file.content)
             print('\n')

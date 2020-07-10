@@ -9,6 +9,8 @@ matrix:
     python: 3.7
   - env: TOXENV=py38
     python: 3.8
+  - env: TOXENV=integration
+    python: 3.8
 install:
 - pip install tox
 script:
@@ -21,3 +23,7 @@ deploy:
   on:
     tags: true
   skip_existing: true
+env:
+  global:
+  - secure: Qfbj+r1UlpkAnS5SEfwN0dMdl57wJgMuuTBI3+FFsVwmPMNQxeC5erVQwgMDx2Sh9whj8SCH8sBlr+0hbypWbahCnJ7PxpYS3/hIGJS06ZUZaegzwEea74p2D8ORgHAPro9rpNCRTDNT34Smyb2Vh3AcIOflewKz870QEXSJZYpcrzroPmvOwSrrIthbjcJrlp4XEqSlToaByzwt4c6mp6X+aSaxdzdIN71MF8R8jQTU4N+4kiM40E7TJZXv/bUJXoAukCm4wDhIzcpNrzE9TvvkGnba/eD8ZsQGq6sv2/CIdvbpaRcZjxoLQP5WuAk4huX7MIJe5zvsO/Zje2zmW3tnT7CQeObpyFzkKPooCUtNoP9qPIzsEg38n94VtMZL3PmAgZLc20DY82Z4/0HMyqDZ5UDITQlAwwhBoaQz78f45m2s6UF6DYqAtlcGeG4NATDL1JXVBC7ks5bAwnkKM6i4L/NfBuNeOBNsApUqKkx97Q1ytVShmud+lnoD02S+6vT6C3f0+Lf2bRd4dbBiQ3D+0t5GqI3A4aVoquH4qt2ccQLrj5sq67tZO7Wt2eico6j+KSL4bVMrhietCnDFDOhKLJW+j6gPXjFduKZhRA6E2HQJu1Atr1+jHXNIOPdiumnNMv75j+7J98loIZt3QnYnZeRcjjYWIm4oCbJCiw4=
+  - secure: P6RKPUpzGFrEfmB+ZMneJjvli/tFXXM8d9o02ShRPfw0vQPWixf+7jYRVCT9Is3HczdLaWr/MqDakAsUCWhWo3MkXFOkVL92YzjCBzAeJjxukSgtWdx99QoHeh90G6iONuQHTuVfNt3P88eiA5o3ydZFlc5NRgssVnTzP/DV2PUYHWMxgxPX3Fh+m01cFZ7715HJ998HtBt89jbsSC5E691PPZVDBDdR+pv4784ZtKzZ5QjbVpvsex/ekpCVbm+pYf3zpGn3SMHK8ukq/Ss/X1/hmOk8WSsznpG4nDTiA+NA3Dt5lUS3GAPfrOYUaACqXOq7VI4L9b/xgS7JdDV0xPyoxdJZDC3armu9q12hGZlSLmZZR33OiV+ep4VO/6SKIkSFJxtCcAoy4Fk5ZaZ/lfzl0LoMAL9WsUUR3jJYLSlUMfqPf9pi6Az7Dl/NHi6y8UqIOBE/L4E+UXM2ADq+FWwE27qYetntngKxln6nLpaI5/ep00QEZDxnQS38TNdYmvrkhxBzMb331rwIA+dnYwIA59gnmhLCvEh54ntZllotgACHINQkEAVO9n6WYYOsSVG3qPqkUmnaT6pjWv+DWq7NaPWNUL4L96gK1xIvLWLQ875L/Q5SF161m8oVLQvs+EymFAj0dIRzXDzt+RDYmbLghRuxbSZhQbOgK0IoqP4=

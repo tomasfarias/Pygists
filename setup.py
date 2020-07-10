@@ -17,6 +17,9 @@ setup(
     packages=find_packages(exclude=['tests', 'docs']),
     license='MIT',
     url='https://github.com/tomasfarias/Pygists',
+    install_requires=[
+        'requests==2.24.0'
+    ],
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
